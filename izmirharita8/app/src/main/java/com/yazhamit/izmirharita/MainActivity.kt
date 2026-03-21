@@ -323,17 +323,18 @@ fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateTo
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.weight(0.1f))
+
         // 3D Sinyal İkonu (Tekil)
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.ic_3d_sinyal),
             contentDescription = "Sinyal İkonu",
             modifier = Modifier
-                .size(150.dp)
-                .padding(bottom = 16.dp),
+                .size(240.dp)
+                .padding(bottom = 8.dp),
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.weight(0.2f))
         Text(
             text = "SİNYAL 35.5",
             style = MaterialTheme.typography.displayMedium,

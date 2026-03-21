@@ -1,57 +1,113 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="200dp"
-    android:height="200dp"
-    android:viewportWidth="200"
-    android:viewportHeight="200">
+    android:width="250dp"
+    android:height="250dp"
+    android:viewportWidth="250"
+    android:viewportHeight="250">
+
+    <!-- GÖLGELER (Derinlik hissi için alt katman) -->
+    <path
+        android:pathData="M 125,45 A 80,80 0 0 1 205,125 A 80,80 0 0 1 125,205 A 80,80 0 0 1 45,125 A 80,80 0 0 1 125,45 Z"
+        android:strokeWidth="14"
+        android:strokeColor="#40000000"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 125,75 A 50,50 0 0 1 175,125 A 50,50 0 0 1 125,175 A 50,50 0 0 1 75,125 A 50,50 0 0 1 125,75 Z"
+        android:strokeWidth="14"
+        android:strokeColor="#40000000"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 125,110 A 15,15 0 0 1 140,125 A 15,15 0 0 1 125,140 A 15,15 0 0 1 110,125 A 15,15 0 0 1 125,110 Z"
+        android:fillColor="#40000000" />
+
+    <!-- 3D KALINLIK KATMANI (Koyu Kırmızı/Turuncu) -->
+    <!-- Dış Dalga Kalınlık -->
+    <path
+        android:pathData="M 125,40 A 80,80 0 0 1 205,120 A 80,80 0 0 1 125,200 A 80,80 0 0 1 45,120 A 80,80 0 0 1 125,40 Z"
+        android:strokeWidth="16"
+        android:strokeColor="#8B0000"
+        android:strokeLineCap="round" />
+    <!-- Orta Dalga Kalınlık -->
+    <path
+        android:pathData="M 125,70 A 50,50 0 0 1 175,120 A 50,50 0 0 1 125,170 A 50,50 0 0 1 75,120 A 50,50 0 0 1 125,70 Z"
+        android:strokeWidth="16"
+        android:strokeColor="#B8860B"
+        android:strokeLineCap="round" />
+    <!-- İç Nokta Kalınlık -->
+    <path
+        android:pathData="M 125,105 A 20,20 0 0 1 145,125 A 20,20 0 0 1 125,145 A 20,20 0 0 1 105,125 A 20,20 0 0 1 125,105 Z"
+        android:fillColor="#8B0000" />
+
+
+    <!-- ÜST YÜZEY (Ana Gradient Rengi) -->
     <!-- Dış Halka -->
     <path
-        android:pathData="M 100,20 A 80,80 0 0 1 180,100 A 80,80 0 0 1 100,180 A 80,80 0 0 1 20,100 A 80,80 0 0 1 100,20 Z"
-        android:strokeWidth="10"
+        android:pathData="M 125,35 A 80,80 0 0 1 205,115 A 80,80 0 0 1 125,195 A 80,80 0 0 1 45,115 A 80,80 0 0 1 125,35 Z"
+        android:strokeWidth="14"
         android:strokeLineCap="round">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="20" android:startY="20"
-                android:endX="180" android:endY="180">
-                <item android:offset="0.0" android:color="#FFB22222" />
-                <item android:offset="1.0" android:color="#FFFF4500" />
+                android:startX="45" android:startY="35"
+                android:endX="205" android:endY="195">
+                <item android:offset="0.0" android:color="#FF6347" /> <!-- Tomato -->
+                <item android:offset="1.0" android:color="#DC143C" /> <!-- Crimson -->
             </gradient>
         </aapt:attr>
     </path>
     <!-- Orta Halka -->
     <path
-        android:pathData="M 100,45 A 55,55 0 0 1 155,100 A 55,55 0 0 1 100,155 A 55,55 0 0 1 45,100 A 55,55 0 0 1 100,45 Z"
-        android:strokeWidth="10"
+        android:pathData="M 125,65 A 50,50 0 0 1 175,115 A 50,50 0 0 1 125,165 A 50,50 0 0 1 75,115 A 50,50 0 0 1 125,65 Z"
+        android:strokeWidth="14"
         android:strokeLineCap="round">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="45" android:startY="45"
-                android:endX="155" android:endY="155">
-                <item android:offset="0.0" android:color="#FFFF8C00" />
-                <item android:offset="1.0" android:color="#FFFFD700" />
+                android:startX="75" android:startY="65"
+                android:endX="175" android:endY="165">
+                <item android:offset="0.0" android:color="#FFD700" /> <!-- Gold -->
+                <item android:offset="1.0" android:color="#FFA500" /> <!-- Orange -->
             </gradient>
         </aapt:attr>
     </path>
-    <!-- İç Nokta (Sinyal Merkezi) -->
+    <!-- İç Nokta -->
     <path
-        android:pathData="M 100,80 A 20,20 0 0 1 120,100 A 20,20 0 0 1 100,120 A 20,20 0 0 1 80,100 A 20,20 0 0 1 100,80 Z">
+        android:pathData="M 125,95 A 20,20 0 0 1 145,115 A 20,20 0 0 1 125,135 A 20,20 0 0 1 105,115 A 20,20 0 0 1 125,95 Z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="100" android:centerY="100"
-                android:gradientRadius="20">
-                <item android:offset="0.0" android:color="#FFFFFF" />
-                <item android:offset="1.0" android:color="#FFFF0000" />
+                android:centerX="115" android:centerY="105"
+                android:gradientRadius="25">
+                <item android:offset="0.0" android:color="#FFA07A" /> <!-- Light Salmon (Highlight) -->
+                <item android:offset="0.4" android:color="#FF4500" /> <!-- Orange Red -->
+                <item android:offset="1.0" android:color="#8B0000" /> <!-- Dark Red -->
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Parlama efekti (3D hissi için beyaz highlight) -->
+    <!-- PARLAMA EFEKTLERİ (Highlight) -->
+    <!-- Dış Halka Parlama -->
     <path
-        android:pathData="M 100,20 A 80,80 0 0 1 180,100"
-        android:strokeWidth="6"
+        android:pathData="M 125,35 A 80,80 0 0 1 181.5,58.4"
+        android:strokeWidth="4"
         android:strokeColor="#80FFFFFF"
         android:strokeLineCap="round" />
+    <path
+        android:pathData="M 68.5,58.4 A 80,80 0 0 1 100,40"
+        android:strokeWidth="4"
+        android:strokeColor="#80FFFFFF"
+        android:strokeLineCap="round" />
+    <!-- Orta Halka Parlama -->
+    <path
+        android:pathData="M 125,65 A 50,50 0 0 1 160.3,79.6"
+        android:strokeWidth="4"
+        android:strokeColor="#90FFFFFF"
+        android:strokeLineCap="round" />
+    <!-- İç Nokta Parlama -->
+    <path
+        android:pathData="M 125,98 A 17,17 0 0 1 137,103"
+        android:strokeWidth="3"
+        android:strokeColor="#A0FFFFFF"
+        android:strokeLineCap="round" />
+
 </vector>
