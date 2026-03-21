@@ -89,7 +89,8 @@ data class Sinyal(
     val photoUri: String? = null,
     val durum: String = "İnceleniyor", // İnceleniyor, Bildirildi, Çözüldü
     val adminCevap: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val fcmToken: String? = null // Bildirim göndermek için kullanıcı tokenı
 )
 
 class MainActivity : ComponentActivity() {
@@ -142,6 +143,23 @@ fun UygulamaNavigasyonu() {
     var mevcutEkran by remember { mutableStateOf(Ekran.LOBI) }
     var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
     val context = LocalContext.current
+
+    // Android 13+ (API 33+) Notification Permission Request
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(context, "Bildirim izni reddedildi. Yeni sinyallerden haberdar olamayabilirsiniz.", Toast.LENGTH_SHORT).show()
+            }
+        }
+        LaunchedEffect(Unit) {
+            val permission = ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+            if (permission != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
     val activity = context as? Activity
     val coroutineScope = rememberCoroutineScope()
 
@@ -281,6 +299,7 @@ fun UygulamaNavigasyonu() {
                                         mevcutEkran = Ekran.ADMIN
                                         showAdminDialog = false
                                         Toast.makeText(context, "Admin Paneline Hoşgeldiniz", Toast.LENGTH_SHORT).show()
+                                        com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("admin_notifications")
                                     } else {
                                         Toast.makeText(context, "Hatalı Kullanıcı Adı veya Şifre", Toast.LENGTH_SHORT).show()
                                     }
@@ -292,6 +311,7 @@ fun UygulamaNavigasyonu() {
                                         mevcutEkran = Ekran.ADMIN
                                         showAdminDialog = false
                                         Toast.makeText(context, "Admin Paneline Hoşgeldiniz", Toast.LENGTH_SHORT).show()
+                                        com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("admin_notifications")
                                     } else {
                                         Toast.makeText(context, "Bağlantı kurulamadı veya Hatalı Giriş", Toast.LENGTH_LONG).show()
                                     }
@@ -805,6 +825,14 @@ fun HaritaEkrani(onComplete: () -> Unit) {
                                         }
 
                                         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "anonim"
+
+                                        var fcmToken: String? = null
+                                        try {
+                                            fcmToken = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
+                                        } catch (e: Exception) {
+                                            Log.e("FCM", "Token alınamadı", e)
+                                        }
+
                                         val yeniSinyal = Sinyal(
                                             id = UUID.randomUUID().toString(),
                                             userId = userId,
@@ -814,12 +842,15 @@ fun HaritaEkrani(onComplete: () -> Unit) {
                                             telefon = telefon,
                                             adres = addressText,
                                             aciklama = yorum,
-                                            photoUri = uploadedImageUrl
+                                            photoUri = uploadedImageUrl,
+                                            fcmToken = fcmToken
                                         )
 
                                         FirebaseFirestore.getInstance().collection("sinyaller")
                                             .document(yeniSinyal.id)
                                             .set(yeniSinyal).await()
+
+                                        // Admin topic'ine yeni sinyal bildirimi gönderilebilir (Cloud function veya Retrofit vasıtasıyla)
 
                                         showSuccessDialog = true
                                         flashLightEffect(context, coroutineScope)
