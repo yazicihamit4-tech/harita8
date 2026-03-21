@@ -59,6 +59,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.*
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.LoadAdError
+import androidx.compose.ui.viewinterop.AndroidView
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -93,6 +101,11 @@ class MainActivity : ComponentActivity() {
             FirebaseApp.initializeApp(this)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+
+        MobileAds.initialize(this) {
+            // Reklam SDK'sı hazır olunca geçiş reklamını yükle
+            loadInterstitialAd(this)
         }
 
         setContent {
@@ -354,9 +367,14 @@ fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateTo
 
         Spacer(modifier = Modifier.weight(1f))
 
+        val activity = context as? Activity
+
         Button(
             onClick = {
-                if (isLoggedIn) onNavigateToHarita()
+                if (isLoggedIn) {
+                    showInterstitialAd(activity)
+                    onNavigateToHarita()
+                }
                 else Toast.makeText(context, "Lütfen önce giriş yapın!", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier
@@ -381,7 +399,10 @@ fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateTo
 
         Button(
             onClick = {
-                if (isLoggedIn) onNavigateToTakip()
+                if (isLoggedIn) {
+                    showInterstitialAd(activity)
+                    onNavigateToTakip()
+                }
                 else Toast.makeText(context, "Lütfen önce giriş yapın!", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier
@@ -403,6 +424,41 @@ fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateTo
         }
 
         Spacer(modifier = Modifier.weight(0.5f))
+
+        // Banner Reklam Alanı
+        AndroidView(
+            modifier = Modifier.fillMaxWidth(),
+            factory = { context ->
+                AdView(context).apply {
+                    setAdSize(AdSize.BANNER)
+                    adUnitId = "ca-app-pub-5879474591831999/9816381152"
+                    loadAd(AdRequest.Builder().build())
+                }
+            }
+        )
+    }
+}
+
+// Global Geçiş Reklamı Değişkeni
+var mInterstitialAd: InterstitialAd? = null
+
+fun loadInterstitialAd(context: Context) {
+    val adRequest = AdRequest.Builder().build()
+    InterstitialAd.load(context, "ca-app-pub-5879474591831999/4703655274", adRequest, object : InterstitialAdLoadCallback() {
+        override fun onAdFailedToLoad(adError: LoadAdError) {
+            mInterstitialAd = null
+        }
+        override fun onAdLoaded(interstitialAd: InterstitialAd) {
+            mInterstitialAd = interstitialAd
+        }
+    })
+}
+
+fun showInterstitialAd(activity: Activity?) {
+    if (mInterstitialAd != null && activity != null) {
+        mInterstitialAd?.show(activity)
+        // Gösterildikten sonra yeni reklam yükleyelim
+        loadInterstitialAd(activity)
     }
 }
 

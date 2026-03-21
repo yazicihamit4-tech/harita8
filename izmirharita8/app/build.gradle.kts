@@ -73,6 +73,9 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
 
+    // --- GOOGLE ADMOB (REKLAMLAR) ---
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
+
     // --- FIREBASE ---
     implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation("com.google.firebase:firebase-analytics")
