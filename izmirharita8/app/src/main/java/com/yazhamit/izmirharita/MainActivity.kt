@@ -323,48 +323,15 @@ fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateTo
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 4 Durum (Sorun, Bildirim, Çözüm, Mutlu Son) İkonları
-        Row(
+        // 3D Sinyal İkonu (Tekil)
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = R.drawable.ic_3d_sinyal),
+            contentDescription = "Sinyal İkonu",
             modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
+                .size(150.dp)
                 .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.ic_sorun),
-                contentDescription = "Sorun",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.Fit
-            )
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.ic_bildirim),
-                contentDescription = "Bildirim",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.Fit
-            )
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.ic_cozum),
-                contentDescription = "Çözüm",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.Fit
-            )
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.ic_mutluson),
-                contentDescription = "Mutlu Son",
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentScale = ContentScale.Fit
-            )
-        }
+            contentScale = ContentScale.Fit
+        )
 
         Spacer(modifier = Modifier.weight(0.2f))
         Text(
