@@ -104,9 +104,18 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
 
-        MobileAds.initialize(this) {
-            // Reklam SDK'sı hazır olunca geçiş reklamını yükle
-            loadInterstitialAd(this)
+        // AdMob'u asenkron olarak arka planda (IO Dispatcher) başlat, UI'ı (Main Thread) bloklama
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                MobileAds.initialize(this@MainActivity) {
+                    // Reklam SDK'sı hazır olunca geçiş reklamını UI thread'de yükle
+                    CoroutineScope(Dispatchers.Main).launch {
+                        loadInterstitialAd(this@MainActivity)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         setContent {
@@ -144,19 +153,25 @@ fun UygulamaNavigasyonu() {
     var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
     val context = LocalContext.current
 
-    // Android 13+ (API 33+) Notification Permission Request
+    // Android 13+ (API 33+) Notification Permission Request (Güvenli State/Effect ile)
+    var isPermissionRequested by remember { mutableStateOf(false) }
+
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         val permissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
         ) { isGranted ->
             if (!isGranted) {
-                Toast.makeText(context, "Bildirim izni reddedildi. Yeni sinyallerden haberdar olamayabilirsiniz.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Bildirim izni reddedildi.", Toast.LENGTH_SHORT).show()
             }
         }
+
         LaunchedEffect(Unit) {
-            val permission = ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-            if (permission != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            if (!isPermissionRequested) {
+                val permission = ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+                if (permission != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                }
+                isPermissionRequested = true
             }
         }
     }
