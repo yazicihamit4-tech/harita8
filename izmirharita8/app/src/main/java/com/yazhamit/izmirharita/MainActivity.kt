@@ -365,12 +365,59 @@ fun UygulamaNavigasyonu() {
 @Composable
 fun LobiEkrani(isLoggedIn: Boolean, onNavigateToHarita: () -> Unit, onNavigateToTakip: () -> Unit) {
     val context = LocalContext.current
+
+    // Firestore'dan Anlık İstatistikleri Çekme
+    var toplamBildirim by remember { mutableStateOf(0) }
+    var cozulduBildirim by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("sinyaller").addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.w("Firestore", "Listen failed.", e)
+                return@addSnapshotListener
+            }
+            if (snapshot != null) {
+                toplamBildirim = snapshot.size()
+                cozulduBildirim = snapshot.documents.count { it.getString("durum") == "Çözüldü" }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // İstatistik Barı
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Gelen Sinyal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
+                    Text("$toplamBildirim", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                }
+                Divider(modifier = Modifier.height(40.dp).width(1.dp), color = Color.Gray.copy(alpha = 0.5f))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Çözülen Sinyal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
+                    Text("$cozulduBildirim", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.secondary)
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.weight(0.1f))
 
         // 3D Sinyal İkonu (Tekil)
@@ -1020,27 +1067,63 @@ fun AdminEkrani() {
         )
 
         tumSinyaller.forEach { sinyal ->
-            AdminBildirimKarti(sinyal = sinyal, onGuncelle = { id, durum, cevap ->
-                coroutineScope.launch {
-                    try {
-                        FirebaseFirestore.getInstance().collection("sinyaller").document(id)
-                            .update(mapOf("durum" to durum, "adminCevap" to cevap)).await()
-                        Toast.makeText(context, "Güncellendi", Toast.LENGTH_SHORT).show()
-                        fetchSinyaller() // Listeyi yenile
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+            AdminBildirimKarti(
+                sinyal = sinyal,
+                onGuncelle = { id, durum, cevap ->
+                    coroutineScope.launch {
+                        try {
+                            FirebaseFirestore.getInstance().collection("sinyaller").document(id)
+                                .update(mapOf("durum" to durum, "adminCevap" to cevap)).await()
+                            Toast.makeText(context, "Güncellendi", Toast.LENGTH_SHORT).show()
+                            fetchSinyaller() // Listeyi yenile
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                onSil = { id ->
+                    coroutineScope.launch {
+                        try {
+                            FirebaseFirestore.getInstance().collection("sinyaller").document(id).delete().await()
+                            Toast.makeText(context, "Bildirim Silindi", Toast.LENGTH_SHORT).show()
+                            fetchSinyaller() // Listeyi yenile
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Silme Hatası: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
-            })
+            )
         }
     }
 }
 
 @Composable
-fun AdminBildirimKarti(sinyal: Sinyal, onGuncelle: (String, String, String) -> Unit) {
+fun AdminBildirimKarti(sinyal: Sinyal, onGuncelle: (String, String, String) -> Unit, onSil: (String) -> Unit) {
     var cevap by remember(sinyal.adminCevap) { mutableStateOf(sinyal.adminCevap) }
     var seciliDurum by remember(sinyal.durum) { mutableStateOf(sinyal.durum) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val durumlar = listOf("İnceleniyor", "Bildirildi", "Çözüldü")
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Bildirimi Sil") },
+            text = { Text("Bu bildirimi tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onSil(sinyal.id)
+                }) {
+                    Text("Evet, Sil", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("İptal")
+                }
+            }
+        )
+    }
 
     Card(
         modifier = Modifier
@@ -1050,7 +1133,13 @@ fun AdminBildirimKarti(sinyal: Sinyal, onGuncelle: (String, String, String) -> U
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Bildiren: ${sinyal.isimSoyisim.takeIf { it.isNotBlank() } ?: "Bilinmiyor"}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Bildiren: ${sinyal.isimSoyisim.takeIf { it.isNotBlank() } ?: "Bilinmiyor"}", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                // Sil Butonu (Çöp Kutusu veya Metin)
+                TextButton(onClick = { showDeleteDialog = true }, contentPadding = PaddingValues(0.dp)) {
+                    Text("Sil", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            }
             Text("Telefon: ${sinyal.telefon.takeIf { it.isNotBlank() } ?: "Bilinmiyor"}", fontSize = 14.sp)
             Spacer(modifier = Modifier.height(4.dp))
 
