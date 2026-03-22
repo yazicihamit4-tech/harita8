@@ -18,10 +18,35 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         Log.d("FCM", "Mesaj Geldi: ${remoteMessage.from}")
 
-        // Check if message contains a notification payload.
+        var title: String? = null
+        var body: String? = null
+
+        // Firebase Cloud Functions vb. tarafından "notification" veya "data" payload olarak gönderilebilir.
+        // İki durumu da yakalayalım.
+
+        // 1. Durum: Gelen mesaj doğrudan "notification" payload içeriyorsa
         remoteMessage.notification?.let {
-            Log.d("FCM", "Bildirim Başlığı: ${it.title}, Mesajı: ${it.body}")
-            sendNotification(it.title ?: "Sinyal 35.5", it.body ?: "Yeni bir bildiriminiz var.")
+            title = it.title
+            body = it.body
+            Log.d("FCM", "Notification Payload: Başlık=${it.title}, Mesaj=${it.body}")
+        }
+
+        // 2. Durum: Mesaj "data" payload içeriyorsa (Özellikle custom backend'lerde yaygındır)
+        if (remoteMessage.data.isNotEmpty()) {
+            Log.d("FCM", "Data Payload: ${remoteMessage.data}")
+            if (title == null) title = remoteMessage.data["title"]
+            if (body == null) body = remoteMessage.data["body"]
+
+            // Eğer backend farklı bir anahtar kelime ("message" vb.) kullanıyorsa
+            if (body == null) body = remoteMessage.data["message"]
+        }
+
+        // Başlık ve içeriğimiz hazırsa bildirimi göster
+        if (title != null || body != null) {
+            sendNotification(title ?: "SİNYAL 35.5", body ?: "Yeni bir bildiriminiz var.")
+        } else {
+            // Hiçbiri yoksa varsayılan metin göster
+            sendNotification("SİNYAL 35.5", "Yeni bir bildirim aldınız.")
         }
     }
 
@@ -40,9 +65,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val channelId = "sinyal_default_channel"
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_yelkenli_pin) // Fallback as we know this icon exists
+            .setSmallIcon(R.mipmap.ic_launcher_round) // Cihazlarda %100 var olan ikon kullanılıyor
             .setContentTitle(title)
             .setContentText(messageBody)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody)) // Uzun metinler için genişletilebilir
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 8 altı için yüksek öncelik
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 
@@ -53,11 +80,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val channel = NotificationChannel(
                 channelId,
                 "Sinyal Bildirimleri",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH // Ekrana düşmesi (heads-up) için IMPORTANCE_HIGH
             )
+            channel.description = "Sinyal 35.5 Bildirim Kanalı"
+            channel.enableVibration(true)
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build())
+        val notificationId = System.currentTimeMillis().toInt() // Her bildirimi ayrı göstermek için dinamik ID
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 }
